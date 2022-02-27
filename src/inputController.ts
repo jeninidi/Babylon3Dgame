@@ -1,4 +1,4 @@
-import { Scene, ActionManager, ExecuteCodeAction, Observer, Scalar } from '@babylonjs/core';
+import { Scene, ActionManager, ExecuteCodeAction, Observer, Scalar, UniversalCamera } from '@babylonjs/core';
 
 export class PlayerInput {
 
