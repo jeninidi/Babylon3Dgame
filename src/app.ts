@@ -1,7 +1,7 @@
 import "@babylonjs/core/Debug/debugLayer";
 import "@babylonjs/inspector";
 import "@babylonjs/loaders/glTF";
-import { Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, MeshBuilder, FreeCamera, Color4, StandardMaterial, Color3, PointLight, ShadowGenerator, Quaternion, Matrix } from "@babylonjs/core";
+import { Engine, Scene, ArcRotateCamera, Vector3, HemisphericLight, Mesh, MeshBuilder, FreeCamera, Color4, StandardMaterial, Color3, PointLight, ShadowGenerator, Quaternion, Matrix, SceneLoader } from "@babylonjs/core";
 import { AdvancedDynamicTexture, Button, Control } from "@babylonjs/gui";
 import { Environment } from "./environment";
 import { Player } from "./characterController";
@@ -52,18 +52,6 @@ class App {
 
     private _createCanvas(): HTMLCanvasElement {
 
-        //Commented out for development
-        // document.documentElement.style["overflow"] = "hidden";
-        // document.documentElement.style.overflow = "hidden";
-        // document.documentElement.style.width = "100%";
-        // document.documentElement.style.height = "100%";
-        // document.documentElement.style.margin = "0";
-        // document.documentElement.style.padding = "0";
-        // document.body.style.overflow = "hidden";
-        // document.body.style.width = "100%";
-        // document.body.style.height = "100%";
-        // document.body.style.margin = "0";
-        // document.body.style.padding = "0";
 
         //create the canvas html element and attach it to the webpage
         this._canvas = document.createElement("canvas");
@@ -178,8 +166,10 @@ class App {
 
         //--START LOADING AND SETTING UP THE GAME DURING THIS SCENE--
         var finishedLoading = false;
+
         await this._setUpGame().then(res =>{
             finishedLoading = true;
+            this._goToGame();
         });
     }
 
@@ -216,21 +206,33 @@ class App {
             box.position.y = 1.5;
             box.position.z = 1;
 
-            var body = Mesh.CreateCylinder("body", 3, 2,2,0,0,scene);
-            var bodymtl = new StandardMaterial("red",scene);
-            bodymtl.diffuseColor = new Color3(.8,.5,.5);
-            body.material = bodymtl;
-            body.isPickable = false;
-            body.bakeTransformIntoVertices(Matrix.Translation(0, 1.5, 0)); // simulates the imported mesh's origin
+            // var body = Mesh.CreateCylinder("body", 3, 2,2,0,0,scene);
+            // var bodymtl = new StandardMaterial("red",scene);
+            // bodymtl.diffuseColor = new Color3(.8,.5,.5);
+            // body.material = bodymtl;
+            // body.isPickable = false;
+            // body.bakeTransformIntoVertices(Matrix.Translation(0, 1.5, 0)); // simulates the imported mesh's origin
 
-            //parent the meshes
-            box.parent = body;
-            body.parent = outer;
+            // //parent the meshes
+            // box.parent = body;
+            // body.parent = outer;
 
-            return {
-                mesh: outer as Mesh
-            }
+            return SceneLoader.ImportMeshAsync(null, "./models/", "player.glb", scene).then((result) =>{
+                const root = result.meshes[0];
+                //body is our actual player mesh
+                const body = root;
+                body.parent = outer;
+                body.isPickable = false; //so our raycasts dont hit ourself
+                body.getChildMeshes().forEach(m => {
+                    m.isPickable = false;
+                })
+            
+                return {
+                    mesh: outer as Mesh,
+                }
+            });
         }
+
         return loadCharacter().then(assets=> {
             this.assets = assets;
         })

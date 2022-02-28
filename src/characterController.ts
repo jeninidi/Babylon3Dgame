@@ -49,6 +49,10 @@ export class Player extends TransformNode {
 
         shadowGenerator.addShadowCaster(assets.mesh); //the player mesh will cast shadows
 
+        this.scene.getLightByName("sparklight").parent = this.scene.getTransformNodeByName("Empty");
+
+        scene.getMeshByName("outer").position = scene.getTransformNodeByName("startPosition").getAbsolutePosition(); //move the player to the start position
+
         this._input = input;
     }
 
