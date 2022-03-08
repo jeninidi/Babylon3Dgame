@@ -31,7 +31,7 @@ class App {
         this._canvas = this._createCanvas();
 
         // initialize babylon scene and engine
-        this._engine = new Engine(this._canvas, true);
+        this._engine = new Engine(this._canvas);
         this._scene = new Scene(this._engine);
 
         // hide/show the Inspector
