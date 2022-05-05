@@ -12,7 +12,7 @@ export class Player extends TransformNode {
     private _camRoot: TransformNode;
     private _yTilt: TransformNode;
 
-    //const values
+    //declaring variables and giving it a static value so engine can calculate movement and environment
     private static readonly PLAYER_SPEED: number = 0.45;
     private static readonly JUMP_FORCE: number = 0.80;
     private static readonly GRAVITY: number = -2.8;
@@ -21,7 +21,7 @@ export class Player extends TransformNode {
     private static readonly ORIGINAL_TILT: Vector3 = new Vector3(0.5934119456780721, 0, 0);
     public dashTime: number = 0;
 
-    //player movement vars
+    //player movement variables
     private _deltaTime: number = 0;
     private _h: number;
     private _v: number;
@@ -29,16 +29,18 @@ export class Player extends TransformNode {
     private _moveDirection: Vector3 = new Vector3();
     private _inputAmt: number;
 
-    //dashing
+    //dashing variables
     private _dashPressed: boolean;
     private _canDash: boolean = true;
 
-    //gravity, ground detection, jumping
+    //gravity, ground detection, jumping variables
     private _gravity: Vector3 = new Vector3();
-    private _lastGroundPos: Vector3 = Vector3.Zero(); // keep track of the last grounded position
+    // keep track of the last grounded position
+    private _lastGroundPos: Vector3 = Vector3.Zero(); 
     private _grounded: boolean;
     private _jumpCount: number = 1;
 
+    
     constructor(assets, scene: Scene, shadowGenerator: ShadowGenerator, input?) {
         super("player", scene);
         this.scene = scene;
@@ -47,7 +49,8 @@ export class Player extends TransformNode {
         this.mesh = assets.mesh;
         this.mesh.parent = this;
 
-        shadowGenerator.addShadowCaster(assets.mesh); //the player mesh will cast shadows
+        //the player mesh will cast shadows
+        shadowGenerator.addShadowCaster(assets.mesh); 
 
         this.scene.getLightByName("sparklight").parent = this.scene.getTransformNodeByName("Empty");
 
@@ -56,10 +59,12 @@ export class Player extends TransformNode {
         this._input = input;
     }
 
+    //method to update the character position based on movement
     private _updateFromControls(): void {
         this._deltaTime = this.scene.getEngine().getDeltaTime() / 1000.0;
 
-        this._moveDirection = Vector3.Zero(); // vector that holds movement information
+        // vector that holds movement information
+        this._moveDirection = Vector3.Zero(); 
         this._h = this._input.horizontal; //x-axis
         this._v = this._input.vertical; //z-axis
 
@@ -80,7 +85,7 @@ export class Player extends TransformNode {
             this.dashTime++;
         }
 
-        //--MOVEMENTS BASED ON CAMERA (as it rotates)--
+        //MOVEMENTS BASED ON CAMERA (as it rotates)
         let fwd = this._camRoot.forward;
         let right = this._camRoot.right;
         let correctedVertical = fwd.scaleInPlace(this._v);
@@ -149,19 +154,24 @@ export class Player extends TransformNode {
             return mesh.isPickable && mesh.isEnabled();
         }
 
-        //4 raycasts outward from center
+        //4 raycasts outward from the center of the character - one for each side
+
+        //raycast 1
         let raycast = new Vector3(this.mesh.position.x, this.mesh.position.y + 0.5, this.mesh.position.z + .25);
         let ray = new Ray(raycast, Vector3.Up().scale(-1), 1.5);
         let pick = this.scene.pickWithRay(ray, predicate);
 
+        //raycast 2
         let raycast2 = new Vector3(this.mesh.position.x, this.mesh.position.y + 0.5, this.mesh.position.z - .25);
         let ray2 = new Ray(raycast2, Vector3.Up().scale(-1), 1.5);
         let pick2 = this.scene.pickWithRay(ray2, predicate);
 
+        //raycast 3
         let raycast3 = new Vector3(this.mesh.position.x + .25, this.mesh.position.y + 0.5, this.mesh.position.z);
         let ray3 = new Ray(raycast3, Vector3.Up().scale(-1), 1.5);
         let pick3 = this.scene.pickWithRay(ray3, predicate);
 
+        //raycast 4
         let raycast4 = new Vector3(this.mesh.position.x - .25, this.mesh.position.y + 0.5, this.mesh.position.z);
         let ray4 = new Ray(raycast4, Vector3.Up().scale(-1), 1.5);
         let pick4 = this.scene.pickWithRay(ray4, predicate);
@@ -188,6 +198,7 @@ export class Player extends TransformNode {
         return false;
     }
 
+    //check if character is on the ground and when to ground it - after jumping and during dahsing
     private _updateGroundDetection(): void {
         if (!this._isGrounded()) {
             //if the body isnt grounded, check if it's on a slope and was either falling or walking onto it
@@ -230,11 +241,13 @@ export class Player extends TransformNode {
 
     }
 
+    //method to detect if any changes to the world should be displayed based on character position
     private _beforeRenderUpdate(): void {
         this._updateFromControls();
         this._updateGroundDetection();
     }
 
+    //method to detect how the world should be changed when camera moves
     public activatePlayerCamera(): UniversalCamera {
         this.scene.registerBeforeRender(() => {
     
@@ -245,6 +258,7 @@ export class Player extends TransformNode {
         return this.camera;
     }
 
+    //update camera when player moves
     private _updateCamera(): void {
         let centerPlayer = this.mesh.position.y + 2;
         this._camRoot.position = Vector3.Lerp(this._camRoot.position, new Vector3(this.mesh.position.x, centerPlayer, this.mesh.position.z), 0.4);

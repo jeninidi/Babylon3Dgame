@@ -1,6 +1,8 @@
 import { Scene, Mesh, Vector3, SceneLoader } from "@babylonjs/core";
 
 export class Environment {
+    //Represents a scene to be rendered by the engine
+    //Scene - Babylonjs class
     private _scene: Scene;
 
     constructor(scene: Scene) {

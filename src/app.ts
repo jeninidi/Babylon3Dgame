@@ -11,18 +11,18 @@ enum State { START = 0, GAME = 1, LOSE = 2, CUTSCENE = 3 }
 
 class App {
     // General Entire Application
-    private _scene: Scene;
-    private _canvas: HTMLCanvasElement;
-    private _engine: Engine;
+    private _scene: Scene; // represents a scene to be rendered by the engine
+    private _canvas: HTMLCanvasElement; // The canvas element is part of HTML5 and allows for dynamic, scriptable rendering of 2D shapes and bitmap images.
+    private _engine: Engine; //The engine class is responsible for interfacing with all lower-level APIs such as WebGL and Audio
 
-    //Game State Related
+    //Game State Related variable declarations
     public assets;
     private _environment;
     private _player: Player;
     private _input: PlayerInput;
 
 
-    //Scene - related
+    //Scene - related variable declaration
     private _state: number = 0;
     private _gamescene: Scene;
     private _cutScene: Scene;
@@ -50,6 +50,7 @@ class App {
         this._main();
     }
 
+    //method to hold the entire canvas creation
     private _createCanvas(): HTMLCanvasElement {
 
 
@@ -67,6 +68,8 @@ class App {
         await this._goToStart();
 
         // Register a render loop to repeatedly render the scene
+        //it doesn't work yet but it is supposed to switch between different states in the game
+        //start menu, play cutcene, play actual game, game lost screen
         this._engine.runRenderLoop(() => {
             switch (this._state) {
                 case State.START:
@@ -90,13 +93,20 @@ class App {
             this._engine.resize();
         });
     }
+    //this method initiates the game start and shows loading screen until the game loads
     private async _goToStart(){
         this._engine.displayLoadingUI();
 
+        //detaches all event handlers
         this._scene.detachControl();
+        //variable to create a new scene
         let scene = new Scene(this._engine);
         scene.clearColor = new Color4(0,0,0,1);
+        //var to hold instance of a free camera - just to show it works
+        //later will be switched to Universal camera - which is an updated version of the Free camera
+        //universal camera will provide more 'gaming' features like gamepad utilization
         let camera = new FreeCamera("camera1", new Vector3(0, 0, 0), scene);
+        //defines what position the camera should look towards
         camera.setTarget(Vector3.Zero());
 
         //create a fullscreen ui for all of our GUI elements
@@ -119,7 +129,7 @@ class App {
             scene.detachControl(); //observables disabled
         });
 
-        //--SCENE FINISHED LOADING--
+        //SCENE FINISHED LOADING
         await scene.whenReadyAsync();
         this._engine.hideLoadingUI();
         //lastly set the current state to the start state and set the scene to the start scene
@@ -128,9 +138,11 @@ class App {
         this._state = State.START;
     }
 
+    //method for displaying the cutscene
+    //currently we have no actual cutscene to display but this is needed so we implement the state switching
     private async _goToCutScene(): Promise<void> {
         this._engine.displayLoadingUI();
-        //--SETUP SCENE--
+        //SETUP SCENE
         //dont detect any inputs from this ui while the game is loading
         this._scene.detachControl();
         this._cutScene = new Scene(this._engine);
@@ -138,10 +150,11 @@ class App {
         camera.setTarget(Vector3.Zero());
         this._cutScene.clearColor = new Color4(0, 0, 0, 1);
 
-         //--GUI--
+         //GUI
+         //Class used to create texture to support 2D GUI elements
          const cutScene = AdvancedDynamicTexture.CreateFullscreenUI("cutscene");
 
-        //--PROGRESS DIALOGUE--
+        //PROGRESS DIALOGUE 
         const next = Button.CreateSimpleButton("next", "NEXT");
         next.color = "white";
         next.thickness = 0;
@@ -158,9 +171,13 @@ class App {
         })
 
         //--WHEN SCENE IS FINISHED LOADING--
+        //this promise waits for the scene to finish loading
         await this._cutScene.whenReadyAsync();
+        //hide the loading screen when done loading
         this._engine.hideLoadingUI();
+        //release resources
         this._scene.dispose();
+        //start the state for cutscene
         this._state = State.CUTSCENE;
         this._scene = this._cutScene;
 
@@ -200,23 +217,18 @@ class App {
             outer.ellipsoid = new Vector3(1, 1.5, 1);
             outer.ellipsoidOffset = new Vector3(0, 1.5, 0);
 
-            outer.rotationQuaternion = new Quaternion(0, 1, 0, 0); // rotate the player mesh 180 since we want to see the back of the player
+            // rotate the player mesh 180 since we want to see the back of the player
+            outer.rotationQuaternion = new Quaternion(0, 1, 0, 0); 
 
+            //MeshBuilder is a Babylon class for procedurally building meshes 
+            //In the 3D virtual world shapes are built from meshes, lots of triangular facets joined 
+            //together, each facet made from three vertices.
             var box = MeshBuilder.CreateBox("Small1", { width: 0.5, depth: 0.5, height: 0.25, faceColors: [new Color4(0,0,0,1), new Color4(0,0,0,1), new Color4(0,0,0,1), new Color4(0,0,0,1),new Color4(0,0,0,1), new Color4(0,0,0,1)] }, scene);
             box.position.y = 1.5;
             box.position.z = 1;
 
-            // var body = Mesh.CreateCylinder("body", 3, 2,2,0,0,scene);
-            // var bodymtl = new StandardMaterial("red",scene);
-            // bodymtl.diffuseColor = new Color3(.8,.5,.5);
-            // body.material = bodymtl;
-            // body.isPickable = false;
-            // body.bakeTransformIntoVertices(Matrix.Translation(0, 1.5, 0)); // simulates the imported mesh's origin
-
-            // //parent the meshes
-            // box.parent = body;
-            // body.parent = outer;
-
+            
+            //we are loading the predefined mesh of an imported 3D render
             return SceneLoader.ImportMeshAsync(null, "./models/", "player.glb", scene).then((result) =>{
                 const root = result.meshes[0];
                 //body is our actual player mesh
@@ -233,6 +245,7 @@ class App {
             });
         }
 
+        //returns the all assets loaded for the UI of the character
         return loadCharacter().then(assets=> {
             this.assets = assets;
         })
@@ -243,6 +256,7 @@ class App {
         //temporary light to light the entire scene
         var light0 = new HemisphericLight("HemiLight", new Vector3(0, 1, 0), scene);
 
+        //for the ray cast that you see when the character moves and jumps
         const light = new PointLight("sparklight", new Vector3(0, 0, 0), scene);
         light.diffuse = new Color3(0.08627450980392157, 0.10980392156862745, 0.15294117647058825);
         light.intensity = 35;

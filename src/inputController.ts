@@ -14,6 +14,7 @@ export class PlayerInput {
     public jumpKeyDown: boolean = false;
     public dashing: boolean = false;
 
+    //detect the conrtol input from the keyboard
     constructor(scene: Scene) {
         scene.actionManager = new ActionManager(scene);
 
@@ -30,6 +31,7 @@ export class PlayerInput {
         });
     }
 
+    //detect the need for character position update based on input from keyboard
     private _updateFromKeyboard(): void {
         if (this.inputMap["ArrowUp"]) {
             this.vertical = Scalar.Lerp(this.vertical, 1, 0.2);
